@@ -441,4 +441,57 @@ def main():
 
 if __name__ == "__main__":
     main()
+""""
+import os
 
+def main():
+    # Example camera matrix (replace with your calibration results)
+    camera_matrix = np.array([
+        [1000, 0, 320],  # fx, 0, cx
+        [0, 1000, 240],  # 0, fy, cy
+        [0, 0, 1]        # 0, 0, 1
+    ])
+    dist_coeffs = np.zeros((5, 1))  # Distortion coefficients
+    
+    input_folder = r"c:\Users\raksh\OneDrive\Documents\ocr\text-angle-detection\tests"  # Folder containing images
+    output_folder = r"c:\Users\raksh\OneDrive\Documents\ocr\text-angle-detection\output"  # Folder to save results
+
+    # Create output folder if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
+
+    for filename in os.listdir(input_folder):
+        if filename.lower().endswith(".jpeg"):
+            image_path = os.path.join(input_folder, filename)
+            print(f"Processing: {image_path}")
+            
+            try:
+                # Calculate orientation with calibration
+                result, message = calculate_text_orientation_to_camera(
+                    image_path, camera_matrix, dist_coeffs
+                )
+                
+                if result:
+                    print(f"Text Orientation Analysis ({result['method']}):")
+                    print(f"In-plane rotation: {result['in_plane_rotation']:.2f} degrees")
+
+                    # Rotate image to make text upright
+                    adjusted_angle = -result['in_plane_rotation']  # Flip the sign of the in-plane angle
+                    output_image_path = os.path.join(output_folder, f"rotated_{filename}")
+                    rotated_img = rotate_image_to_upright(image_path, adjusted_angle, output_image_path)
+                    print(f"Rotated image saved as '{output_image_path}'")
+                    
+                    # Visualize results
+                    visualization_path = os.path.join(output_folder, f"visualization_{filename}")
+                    output_image = visualize_orientation(image_path, result, visualization_path)
+                    if output_image is not None:
+                        print(f"Visualization saved to '{visualization_path}'")
+                else:
+                    print(f"Error processing {filename}: {message}")
+                    
+            except Exception as e:
+                print(f"Exception occurred while processing {filename}: {str(e)}")
+
+if __name__ == "__main__":
+    main()
+
+"""
