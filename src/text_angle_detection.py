@@ -290,6 +290,30 @@ def order_points(pts):
     
     return np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.int32)
 
+"""
+def order_points(pts):
+    
+    Order points in clockwise order starting from top-left using cv2.minAreaRect.
+    
+    # Get the minimum area rectangle
+    rect = cv2.minAreaRect(pts)
+    box = cv2.boxPoints(rect)  # Get the 4 corner points
+    box = np.array(box, dtype="float32")
+
+    # Sort the points in clockwise order starting from the top-left
+    # Top-left will have the smallest sum, bottom-right the largest sum
+    s = box.sum(axis=1)
+    top_left = box[np.argmin(s)]
+    bottom_right = box[np.argmax(s)]
+
+    # Top-right will have the smallest difference, bottom-left the largest difference
+    diff = np.diff(box, axis=1)
+    top_right = box[np.argmin(diff)]
+    bottom_left = box[np.argmax(diff)]
+
+    return np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.float32)
+"""
+
 def visualize_orientation(image_path, result, output_path=None):
     """
     Visualize the detected text orientation on the image
