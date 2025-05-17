@@ -5,7 +5,7 @@ Created on Tue Apr 15 20:33:57 2025
 
 @author: rohit.garg
 """
-
+import os
 import cv2
 import numpy as np
 import math
@@ -274,10 +274,9 @@ def calculate_text_orientation_to_camera(image_path, camera_matrix=None, dist_co
         "method": "perspective_estimation"
     }, "Perspective-based orientation analysis completed"
 
+"""
 def order_points(pts):
-    """
-    Order points in clockwise order starting from top-left
-    """
+
     # Sort by sum of coordinates (x+y), the lowest is top-left, highest is bottom-right
     s = pts.sum(axis=1)
     top_left = pts[np.argmin(s)]
@@ -289,12 +288,10 @@ def order_points(pts):
     bottom_left = pts[np.argmax(diff)]
     
     return np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.int32)
-
 """
+
 def order_points(pts):
-    
-    Order points in clockwise order starting from top-left using cv2.minAreaRect.
-    
+        
     # Get the minimum area rectangle
     rect = cv2.minAreaRect(pts)
     box = cv2.boxPoints(rect)  # Get the 4 corner points
@@ -312,7 +309,6 @@ def order_points(pts):
     bottom_left = box[np.argmax(diff)]
 
     return np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.float32)
-"""
 
 def visualize_orientation(image_path, result, output_path=None):
     """
@@ -375,21 +371,6 @@ def rotate_image_to_upright(image_path, angle, output_path=None):
         cv2.imwrite(output_path, rotated)
     return rotated
 
-"""
-def draw_text_boxes(image_path, output_path="rotated_with_boxes.jpg"):
-    image = cv2.imread(image_path)
-    boxes = pytesseract.image_to_boxes(image)
-    h, w = image.shape[:2]
-    for b in boxes.splitlines():
-        b = b.split(' ')
-        x1, y1, x2, y2 = int(b[1]), int(b[2]), int(b[3]), int(b[4])
-        # Tesseract's y origin is at the bottom, OpenCV's at the top
-        cv2.rectangle(image, (x1, h - y2), (x2, h - y1), (0, 255, 0), 2)
-    cv2.imwrite(output_path, image)
-    print(f"Bounding boxes drawn and saved to {output_path}")
-"""
-
-# Example usage
 def main():
     # Example camera matrix (replace with your calibration results)
     camera_matrix = np.array([
@@ -398,125 +379,71 @@ def main():
         [0, 0, 1]        # 0, 0, 1
     ])
     dist_coeffs = np.zeros((5, 1))  # Distortion coefficients
-    
-    image_path = r"C:\Users\raksh\OneDrive\Documents\ocr\ocr-angle-preprocessor\test-file\WhatsApp Image 2025-05-13 at 12.45.10 PM.jpeg"
-    
-    try:
-        # Load the image to determine its dimensions
-        image = cv2.imread(image_path)
-        if image is None:
-            raise ValueError(f"Could not read image from {image_path}")
-        
-        (h, w) = image.shape[:2]
-        
-        # Determine initial orientation based on aspect ratio
-        if w > h:
-            initial_orientation = 180  # Landscape mode
-        else:
-            initial_orientation = 90  # Portrait mode (assume upright portrait)
 
-        # Calculate orientation with calibration
-        result, message = calculate_text_orientation_to_camera(
-            image_path, camera_matrix, dist_coeffs
-        )
-        result, message = calculate_text_orientation_to_camera(
-            image_path, None, None
-        )
-        
-        if result:
-            print(f"Text Orientation Analysis ({result['method']}):")
-            print(f"In-plane rotation: {result['in_plane_rotation']:.2f} degrees")
-
-            # Rotate image to make text upright
-            adjusted_angle = -result['in_plane_rotation']  # Flip the sign of the in-plane angle
-            rotated_img = rotate_image_to_upright(image_path, adjusted_angle, "rotated_upright.jpg")
-            print("Rotated image saved as 'rotated_upright.jpg'")
-            
-            # Calculate the final orientation
-            final_orientation = initial_orientation + adjusted_angle
-            final_orientation = final_orientation % 360  # Normalize to [0, 360)
-            print(f"Final orientation of the image: {final_orientation:.2f} degrees")
-                            
-            if result['method'] == 'camera_calibration':
-                print("\nFull 3D Orientation:")
-                print(f"Text-Camera Angle: {result['text_camera_angle']:.2f} degrees")
-                print(f"Obliqueness: {result['obliqueness']:.2f} degrees")
-                print(f"Pitch: {result['out_of_plane_orientation']['pitch']:.2f} degrees")
-                print(f"Yaw: {result['out_of_plane_orientation']['yaw']:.2f} degrees")
-                print(f"Roll: {result['out_of_plane_orientation']['roll']:.2f} degrees")
-                print(f"Text plane normal vector: {result['normal_vector']}")
-            else:
-                print(f"\nEstimated Text-Camera Angle: {result['estimated_text_camera_angle']:.2f} degrees")
-                print("\nPerspective Analysis:")
-                print(f"Distortion factor: {result['perspective_analysis']['distortion_factor']:.2f}")
-                print(f"Horizontal ratio: {result['perspective_analysis']['horizontal_ratio']:.2f}")
-                print(f"Vertical ratio: {result['perspective_analysis']['vertical_ratio']:.2f}")
-                print(f"Primary distortion axis: {result['perspective_analysis']['primary_distortion_axis']}")
-            
-            # Visualize results
-            output_image = visualize_orientation(image_path, result, "orientation_result.jpg")
-            if output_image is not None:
-                print("\nVisualization saved to 'orientation_result.jpg'")
-        else:
-            print(f"Error: {message}")
-            
-    except Exception as e:
-        print(f"Exception occurred: {str(e)}")
-
-if __name__ == "__main__":
-    main()
-    
-""""
-import os
-
-def main():
-    # Example camera matrix (replace with your calibration results)
-    camera_matrix = np.array([
-        [1000, 0, 320],  # fx, 0, cx
-        [0, 1000, 240],  # 0, fy, cy
-        [0, 0, 1]        # 0, 0, 1
-    ])
-    dist_coeffs = np.zeros((5, 1))  # Distortion coefficients
-    
-    input_folder = r"c:\Users\raksh\OneDrive\Documents\ocr\text-angle-detection\tests"  # Folder containing images
-    output_folder = r"c:\Users\raksh\OneDrive\Documents\ocr\text-angle-detection\output"  # Folder to save results
-
-    # Create output folder if it doesn't exist
+    input_folder = r"C:\Users\raksh\OneDrive\Documents\ocr\text-angle-detection\tests"
+    output_folder = r"C:\Users\raksh\OneDrive\Documents\ocr\text-angle-detection\Solution"
     os.makedirs(output_folder, exist_ok=True)
 
     for filename in os.listdir(input_folder):
-        if filename.lower().endswith(".jpeg"):
+        if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp')):
             image_path = os.path.join(input_folder, filename)
-            print(f"Processing: {image_path}")
-            
+            base_name = os.path.splitext(filename)[0]
+            rotated_path = os.path.join(output_folder, f"{base_name}_rotated.jpg")
+            vis_path = os.path.join(output_folder, f"{base_name}_orientation.jpg")
+
             try:
-                # Calculate orientation with calibration
+                image = cv2.imread(image_path)
+                if image is None:
+                    print(f"Could not read image from {image_path}")
+                    continue
+
+                (h, w) = image.shape[:2]
+                initial_orientation = 180 if w > h else 90
+
                 result, message = calculate_text_orientation_to_camera(
                     image_path, camera_matrix, dist_coeffs
                 )
-                
+                if not result:
+                    result, message = calculate_text_orientation_to_camera(
+                        image_path, None, None
+                    )
+
                 if result:
+                    print(f"\nProcessing {filename}")
                     print(f"Text Orientation Analysis ({result['method']}):")
                     print(f"In-plane rotation: {result['in_plane_rotation']:.2f} degrees")
 
-                    # Rotate image to make text upright
-                    adjusted_angle = -result['in_plane_rotation']  # Flip the sign of the in-plane angle
-                    output_image_path = os.path.join(output_folder, f"rotated_{filename}")
-                    rotated_img = rotate_image_to_upright(image_path, adjusted_angle, output_image_path)
-                    print(f"Rotated image saved as '{output_image_path}'")
-                    
-                    # Visualize results
-                    visualization_path = os.path.join(output_folder, f"visualization_{filename}")
-                    output_image = visualize_orientation(image_path, result, visualization_path)
+                    adjusted_angle = -result['in_plane_rotation']
+                    rotated_img = rotate_image_to_upright(image_path, adjusted_angle, rotated_path)
+                    print(f"Rotated image saved as '{rotated_path}'")
+
+                    final_orientation = (initial_orientation + adjusted_angle) % 360
+                    print(f"Final orientation of the image: {final_orientation:.2f} degrees")
+
+                    if result['method'] == 'camera_calibration':
+                        print("\nFull 3D Orientation:")
+                        print(f"Text-Camera Angle: {result['text_camera_angle']:.2f} degrees")
+                        print(f"Obliqueness: {result['obliqueness']:.2f} degrees")
+                        print(f"Pitch: {result['out_of_plane_orientation']['pitch']:.2f} degrees")
+                        print(f"Yaw: {result['out_of_plane_orientation']['yaw']:.2f} degrees")
+                        print(f"Roll: {result['out_of_plane_orientation']['roll']:.2f} degrees")
+                        print(f"Text plane normal vector: {result['normal_vector']}")
+                    else:
+                        print(f"\nEstimated Text-Camera Angle: {result['estimated_text_camera_angle']:.2f} degrees")
+                        print("\nPerspective Analysis:")
+                        print(f"Distortion factor: {result['perspective_analysis']['distortion_factor']:.2f}")
+                        print(f"Horizontal ratio: {result['perspective_analysis']['horizontal_ratio']:.2f}")
+                        print(f"Vertical ratio: {result['perspective_analysis']['vertical_ratio']:.2f}")
+                        print(f"Primary distortion axis: {result['perspective_analysis']['primary_distortion_axis']}")
+
+                    output_image = visualize_orientation(image_path, result, vis_path)
                     if output_image is not None:
-                        print(f"Visualization saved to '{visualization_path}'")
+                        print(f"Visualization saved to '{vis_path}'")
                 else:
-                    print(f"Error processing {filename}: {message}")
-                    
+                    print(f"Error: {message}")
+
             except Exception as e:
-                print(f"Exception occurred while processing {filename}: {str(e)}")
+                print(f"Exception occurred for {filename}: {str(e)}")
 
 if __name__ == "__main__":
     main()
-
-"""
